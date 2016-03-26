@@ -16,9 +16,9 @@ It is a command line tool for taking notes about your financial balance.
 
     $ tallyit -a 10000 -m "buy something" add
 
-#### show all records
+#### stat all records
 
-    $ tallyit show
+    $ tallyit stat
 
 #### more info
 
