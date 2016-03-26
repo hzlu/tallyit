@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH << File.expand_path('../../lib/', __FILE__)
+
+require 'optparse'
+require 'tallyit'
+
+options = {
+  :storage_file => File.absolute_path('.tallyit.txt', ENV['HOME']),
+  :type => 'expend',
+  :format => 'table'
+}
+
+option_parser = OptionParser.new do |opts|
+  executable_name = File.basename($PROGRAM_NAME)
+  opts.banner = "Usage: #{executable_name} [options] <command>"
+  opts.on('-i', '--[no-]income', 'it is a income tally') do |income|
+    options[:type] = 'income' if income
+  end
+  opts.on('-a AMOUNT', '--amount AMOUNT', Numeric, 'tally amount') do |amount|
+    options[:amount] = amount.round(2)
+  end
+  opts.on('-m MSG', '--message MSG', 'tally message') do |msg|
+    options[:msg] = msg
+  end
+  opts.on('-l LINE', '--line LINE', Integer, 'choose tally line to delete') do |line|
+    options[:line] = line
+  end
+  opts.on('-f FORMAT', '--format FORMAT', 'output format') do |format|
+    options[:format] = format
+  end
+  opts.on_tail('-h', '--help', 'Show help message') do
+    puts opts
+    exit
+  end
+  opts.on_tail('-v', '--version', 'Show version') do
+    puts Tallyit::VERSION
+    exit
+  end
+end
+
+begin
+  option_parser.parse!
+  if ARGV.empty?
+    puts "error: you should supply a command"
+    puts option_parser.help
+    exit 1
+  else
+    command = ARGV.shift
+    all_commands = %w(add delete stat)
+    raise OptionParser::InvalidArgument.new("#{command}") unless all_commands.include?(command)
+  end
+rescue OptionParser::InvalidArgument => ex
+  STDERR.puts ex.message
+  STDERR.puts option_parser
+  exit 1
+end
+
+Tally = Struct.new(:type, :amount, :msg)
+tally = Tally.new(options[:type], options[:amount], options[:msg])
+case command
+when 'add'
+  Tallyit.add(tally, options[:storage_file])
+when 'delete'
+  Tallyit.delete(options[:storage_file], options[:line])
+when 'stat'
+  Tallyit.stat(options[:storage_file], options[:format])
+end
+
