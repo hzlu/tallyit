@@ -4,6 +4,7 @@ $LOAD_PATH << File.expand_path('../../lib/', __FILE__)
 
 require 'optparse'
 require 'tallyit'
+require 'rainbow'
 
 options = {
   :storage_file => File.absolute_path('.tallyit.txt', ENV['HOME']),
@@ -14,21 +15,29 @@ options = {
 option_parser = OptionParser.new do |opts|
   executable_name = File.basename($PROGRAM_NAME)
   opts.banner = "Usage: #{executable_name} [options] <command>"
-  opts.on('-i', '--[no-]income', 'it is a income tally') do |income|
+
+  opts.separator ""
+  opts.separator "Specific options:"
+
+  opts.on('-i', '--[no-]income', 'Tally type flag, income or expend') do |income|
     options[:type] = 'income' if income
   end
-  opts.on('-a AMOUNT', '--amount AMOUNT', Numeric, 'tally amount') do |amount|
+  opts.on('-a AMOUNT', '--amount AMOUNT', Numeric, 'Require a numeric amount') do |amount|
     options[:amount] = amount.round(2)
   end
-  opts.on('-m MSG', '--message MSG', 'tally message') do |msg|
+  opts.on('-m MSG', '--message MSG', 'Set message about the tally') do |msg|
     options[:msg] = msg
   end
-  opts.on('-l LINE', '--line LINE', Integer, 'choose tally line to delete') do |line|
+  opts.on('-l LINE', '--line LINE', Integer, 'Choose the lineno to delete') do |line|
     options[:line] = line
   end
-  opts.on('-f FORMAT', '--format FORMAT', 'output format') do |format|
+  opts.on('--format FORMAT', 'Set the output format "table" or "raw", default: "table"') do |format|
     options[:format] = format
   end
+
+  opts.separator ""
+  opts.separator "Common options:"
+
   opts.on_tail('-h', '--help', 'Show help message') do
     puts opts
     exit
@@ -42,8 +51,8 @@ end
 begin
   option_parser.parse!
   if ARGV.empty?
-    puts "error: you should supply a command"
-    puts option_parser.help
+    STDERR.puts Rainbow("Error: you should supply a command").red.inverse
+    STDERR.puts option_parser
     exit 1
   else
     command = ARGV.shift
@@ -51,7 +60,7 @@ begin
     raise OptionParser::InvalidArgument.new("#{command}") unless all_commands.include?(command)
   end
 rescue OptionParser::InvalidArgument => ex
-  STDERR.puts ex.message
+  STDERR.puts Rainbow(ex.message).red.inverse
   STDERR.puts option_parser
   exit 1
 end
